@@ -34,8 +34,12 @@ cd /opt/yb-build/llvm
 llvm_tarball=${llvm_url##*/}
 llvm_dir_name=${llvm_tarball%.tar.gz}
 if [[ ! -d $llvm_dir_name ]]; then
-  curl -L -O "$llvm_url"
-  tar xzf "$llvm_tarball"
+  cd /tmp/downloads
+  if [[ ! -f "$llvm_url" ]]; then
+    curl -L -O "$llvm_url"
+  fi
+  cd /opt/yb-build/llvm
+  tar xzf "/tmp/downloads/$llvm_tarball"
 fi
 
 compiler_prefix=$PWD/$llvm_dir_name
@@ -48,9 +52,6 @@ lldb_version=16.0.6-yb-2
 # Still use /opt/yb-build/llvm because it exists on many systems.
 lldb_prefix=/opt/yb-build/llvm/yb-lldb-v${lldb_version}-${timestamp}-centos7-$arch
 lldb_build_dir=${lldb_prefix}-build
-
-#rm -rf "${lldb_prefix}"
-#rm -rf "${lldb_build_dir}"
 
 mkdir -p "${lldb_build_dir}"
 cd "$lldb_build_dir"
@@ -102,9 +103,13 @@ ${libunwind_ld_flags}
 ld_flags="${ld_flags_arr[*]}"
 
 
+cd /tmp/downloads
+llvm_src_archive_name=llvmorg-16.0.6-yb-2.tar.gz
+if [[ ! -d $llvm_src_archive_name ]]; then
+  curl -L -O https://github.com/yugabyte/llvm-project/archive/refs/tags/$llvm_src_archive_name
+fi
 cd "$lldb_build_dir"
-curl -L -O https://github.com/yugabyte/llvm-project/archive/refs/tags/llvmorg-16.0.6-yb-2.tar.gz
-tar xzf llvmorg-16.0.6-yb-2.tar.gz
+tar xzf "/tmp/downloads/$llvm_src_archive_name"
 mv llvm-project-llvmorg-16.0.6-yb-2 llvm-project
 llvm_src_dir=$lldb_build_dir/llvm-project
 
